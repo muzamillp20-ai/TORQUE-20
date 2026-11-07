@@ -1,0 +1,158 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null &&
+         request.auth.token.email.lower() == 'muzamillp20@gmail.com' &&
+         request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 3 && data.email.size() <= 100 &&
+             data.role in ['CUSTOMER', 'ADMIN'] &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 1000)) &&
+             (!('phoneNumber' in data) || data.phoneNumber == null || (data.phoneNumber is string && data.phoneNumber.size() <= 30));
+    }
+
+    function isValidService(data) {
+      return data.serviceId is string && data.serviceId.size() > 0 && data.serviceId.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.description is string && data.description.size() > 0 && data.description.size() <= 1000 &&
+             data.price is number && data.price >= 0 &&
+             data.isActive is bool &&
+             (!('category' in data) || data.category == null || (data.category is string && data.category.size() <= 50)) &&
+             (!('durationMinutes' in data) || data.durationMinutes == null || (data.durationMinutes is number && data.durationMinutes >= 0)) &&
+             (!('imageUrl' in data) || data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 1000));
+    }
+
+    function isValidBooking(data) {
+      return data.bookingId is string && data.bookingId.size() > 0 && data.bookingId.size() <= 128 &&
+             data.customerUid is string && data.customerUid.size() > 0 && data.customerUid.size() <= 128 &&
+             data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+             data.customerEmail is string && data.customerEmail.size() > 3 && data.customerEmail.size() <= 100 &&
+             data.customerPhone is string && data.customerPhone.size() >= 5 && data.customerPhone.size() <= 30 &&
+             data.serviceId is string && data.serviceId.size() > 0 && data.serviceId.size() <= 128 &&
+             data.serviceName is string && data.serviceName.size() > 0 && data.serviceName.size() <= 100 &&
+             data.bikeBrand is string && data.bikeBrand.size() > 0 && data.bikeBrand.size() <= 50 &&
+             data.bikeModel is string && data.bikeModel.size() > 0 && data.bikeModel.size() <= 50 &&
+             data.registrationNumber is string && data.registrationNumber.size() > 0 && data.registrationNumber.size() <= 30 &&
+             data.problemDescription is string && data.problemDescription.size() > 0 && data.problemDescription.size() <= 2000 &&
+             data.preferredDate is string && data.preferredDate.size() >= 8 && data.preferredDate.size() <= 20 &&
+             data.preferredTime is string && data.preferredTime.size() >= 3 && data.preferredTime.size() <= 30 &&
+             data.status in ['PENDING', 'ACCEPTED', 'IN_SERVICE', 'COMPLETED', 'REJECTED'] &&
+             (!('statusNote' in data) || data.statusNote == null || (data.statusNote is string && data.statusNote.size() <= 1000));
+    }
+
+    function isValidWorkshopConfig(data) {
+      return data.workshopName is string && data.workshopName.size() > 0 && data.workshopName.size() <= 100 &&
+             data.whatsappNumber is string && data.whatsappNumber.size() >= 5 && data.whatsappNumber.size() <= 30 &&
+             data.adminEmail is string && data.adminEmail.size() > 3 && data.adminEmail.size() <= 100 &&
+             (!('workshopAddress' in data) || data.workshopAddress == null || (data.workshopAddress is string && data.workshopAddress.size() <= 200)) &&
+             (!('workshopPhone' in data) || data.workshopPhone == null || (data.workshopPhone is string && data.workshopPhone.size() <= 30));
+    }
+
+    // --- Collections ---
+
+    // 1. Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       incoming().uid == request.auth.uid &&
+                       (incoming().role == 'CUSTOMER' || isAdmin()) &&
+                       isValidUser(incoming()) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time;
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId &&
+         incoming().uid == existing().uid &&
+         incoming().createdAt == existing().createdAt &&
+         incoming().role == existing().role &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoUrl', 'phoneNumber', 'updatedAt']) &&
+         isValidUser(incoming())) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 2. Services
+    match /services/{serviceId} {
+      allow get: if isSignedIn() && (resource.data.isActive == true || isAdmin());
+      allow list: if isSignedIn() && (resource.data.isActive == true || isAdmin());
+      allow create: if isAdmin() &&
+                       incoming().serviceId == serviceId &&
+                       isValidService(incoming()) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time;
+      allow update: if isAdmin() &&
+                       isValidService(incoming()) &&
+                       incoming().serviceId == existing().serviceId &&
+                       incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin();
+    }
+
+    // 3. Bookings
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (resource.data.customerUid == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.customerUid == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+                       incoming().customerUid == request.auth.uid &&
+                       incoming().status == 'PENDING' &&
+                       incoming().bookingId == bookingId &&
+                       isValidBooking(incoming()) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time;
+      allow update: if isAdmin() &&
+                       isValidBooking(incoming()) &&
+                       incoming().bookingId == existing().bookingId &&
+                       incoming().customerUid == existing().customerUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'statusNote', 'updatedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 4. Workshop Config
+    match /workshop_config/{configId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create, update: if isAdmin() && isValidWorkshopConfig(incoming());
+      allow delete: if false;
+    }
+
+    // 5. Admins
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && (request.auth.uid == adminUid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

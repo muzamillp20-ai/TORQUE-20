@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Mechanical sprocket gear & wrench / motorcycle emblem -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,26 C38.54,26 26,38.54 26,54 C26,69.46 38.54,82 54,82 C69.46,82 82,69.46 82,54 C82,38.54 69.46,26 54,26 Z M54,34 C65.05,34 74,42.95 74,54 C74,65.05 65.05,74 54,74 C42.95,74 34,65.05 34,54 C34,42.95 42.95,34 54,34 Z" />
+        <path
+            android:fillColor="#2E90FA"
+            android:pathData="M54,39 C45.72,39 39,45.72 39,54 C39,62.28 45.72,69 54,69 C62.28,69 69,62.28 69,54 C69,45.72 62.28,39 54,39 Z M54,45 C58.97,45 63,49.03 63,54 C63,58.97 58.97,63 54,63 C49.03,63 45,49.03 45,54 C45,49.03 49.03,45 54,45 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M51,21 h6 v7 h-6 z M51,79 h6 v8 h-6 z M21,51 h8 v6 h-8 z M79,51 h8 v6 h-8 z M31,31 l5,5 l-4,4 l-5,-5 z M72,72 l5,5 l-4,4 l-5,-5 z M72,36 l-5,-5 l4,-4 l5,5 z M31,77 l-5,-5 l4,-4 l5,5 z" />
+        <path
+            android:fillColor="#155EEF"
+            android:pathData="M56,43 L48,53 L53,53 L51,65 L60,54 L55,54 Z" />
+    </group>
+</vector>

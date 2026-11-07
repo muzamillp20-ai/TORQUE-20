@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role differentiation between customer and workshop admin",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth user UID" },
+        "name": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "format": "email", "description": "Google account email" },
+        "photoUrl": { "type": "string", "description": "Optional profile photo URL" },
+        "phoneNumber": { "type": "string", "description": "Optional contact phone number" },
+        "role": { "type": "string", "enum": ["CUSTOMER", "ADMIN"], "description": "Account role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp via server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp via server timestamp" }
+      },
+      "required": ["uid", "name", "email", "role", "createdAt"]
+    },
+    "Service": {
+      "title": "Workshop Service",
+      "description": "Bike repair or maintenance package offered by the workshop",
+      "type": "object",
+      "properties": {
+        "serviceId": { "type": "string", "description": "Unique service identifier" },
+        "name": { "type": "string", "description": "Service name" },
+        "description": { "type": "string", "description": "Detailed description of what is included" },
+        "price": { "type": "number", "description": "Service cost in currency" },
+        "category": { "type": "string", "description": "Category: Maintenance, Repair, Performance, Inspection" },
+        "durationMinutes": { "type": "number", "description": "Estimated duration in minutes" },
+        "imageUrl": { "type": "string", "description": "Optional image URL for the service" },
+        "isActive": { "type": "boolean", "description": "Whether service is available for customer booking" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp via server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp via server timestamp" }
+      },
+      "required": ["serviceId", "name", "description", "price", "isActive", "createdAt"]
+    },
+    "Booking": {
+      "title": "Service Booking",
+      "description": "Customer booking for bike repair or maintenance",
+      "type": "object",
+      "properties": {
+        "bookingId": { "type": "string", "description": "Unique booking document ID" },
+        "customerUid": { "type": "string", "description": "UID of the authenticated customer who created the booking" },
+        "customerName": { "type": "string", "description": "Customer contact name" },
+        "customerEmail": { "type": "string", "format": "email", "description": "Customer email" },
+        "customerPhone": { "type": "string", "description": "Customer phone number" },
+        "serviceId": { "type": "string", "description": "ID of the booked service" },
+        "serviceName": { "type": "string", "description": "Name of the booked service" },
+        "bikeBrand": { "type": "string", "description": "Brand of the bike (e.g. Yamaha, Honda, Royal Enfield)" },
+        "bikeModel": { "type": "string", "description": "Model of the bike" },
+        "registrationNumber": { "type": "string", "description": "Vehicle registration or license plate number" },
+        "problemDescription": { "type": "string", "description": "Detailed description of the issue or maintenance request" },
+        "preferredDate": { "type": "string", "description": "Preferred service appointment date (YYYY-MM-DD)" },
+        "preferredTime": { "type": "string", "description": "Preferred appointment time slot" },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACCEPTED", "IN_SERVICE", "COMPLETED", "REJECTED"],
+          "description": "Current status of the booking in workshop lifecycle"
+        },
+        "statusNote": { "type": "string", "description": "Optional workshop note regarding booking or progress" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Submission timestamp via server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last status modification timestamp via server timestamp" }
+      },
+      "required": [
+        "bookingId",
+        "customerUid",
+        "customerName",
+        "customerEmail",
+        "customerPhone",
+        "serviceId",
+        "serviceName",
+        "bikeBrand",
+        "bikeModel",
+        "registrationNumber",
+        "problemDescription",
+        "preferredDate",
+        "preferredTime",
+        "status",
+        "createdAt"
+      ]
+    },
+    "WorkshopConfig": {
+      "title": "Workshop Configuration",
+      "description": "General workshop contact information and WhatsApp settings",
+      "type": "object",
+      "properties": {
+        "workshopName": { "type": "string", "description": "Name of the workshop" },
+        "workshopAddress": { "type": "string", "description": "Physical workshop address" },
+        "workshopPhone": { "type": "string", "description": "Voice contact number" },
+        "whatsappNumber": { "type": "string", "description": "International format WhatsApp number (e.g. +91...)" },
+        "adminEmail": { "type": "string", "format": "email", "description": "Authorized administrator email" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["workshopName", "whatsappNumber", "adminEmail"]
+    },
+    "Admin": {
+      "title": "Admin Record",
+      "description": "Designated administrator identity record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Admin email" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles indexed by UID"
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Workshop service catalog items"
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Service bookings submitted by customers and managed by workshop admin"
+    },
+    "/workshop_config/{configId}": {
+      "schema": { "$ref": "#/entities/WorkshopConfig" },
+      "description": "Global workshop settings (document id: main)"
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Registry of authorized admin UIDs"
+    }
+  }
+}

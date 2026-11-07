@@ -1,0 +1,6 @@
+{
+  "name": "TORQUE",
+  "description": "Every Ride. Better Care. Bike repair and service management application for customers and workshop owners.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
